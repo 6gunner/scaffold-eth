@@ -78,8 +78,8 @@ const scaffoldEthProvider = navigator.onLine
   : null;
 const poktMainnetProvider = navigator.onLine
   ? new ethers.providers.StaticJsonRpcProvider(
-      "https://eth-mainnet.gateway.pokt.network/v1/lb/611156b4a585a20035148406",
-    )
+    "https://eth-mainnet.gateway.pokt.network/v1/lb/611156b4a585a20035148406",
+  )
   : null;
 const mainnetInfura = navigator.onLine
   ? new ethers.providers.StaticJsonRpcProvider("https://mainnet.infura.io/v3/" + INFURA_ID)
@@ -178,8 +178,8 @@ function App(props) {
     poktMainnetProvider && poktMainnetProvider._isProvider
       ? poktMainnetProvider
       : scaffoldEthProvider && scaffoldEthProvider._network
-      ? scaffoldEthProvider
-      : mainnetInfura;
+        ? scaffoldEthProvider
+        : mainnetInfura;
 
   const [injectedProvider, setInjectedProvider] = useState();
   const [address, setAddress] = useState();
@@ -266,7 +266,7 @@ function App(props) {
   const yourTokenBalance = useContractReader(readContracts, "YourToken", "balanceOf", [address]);
   console.log("🏵 yourTokenBalance:", yourTokenBalance ? ethers.utils.formatEther(yourTokenBalance) : "...");
 
-  const tokensPerEth = useContractReader(readContracts, "Vendor", "tokensPerEth");
+  const tokensPerEth = useContractReader(readContracts, "Vendor", "tokenPrice");
   console.log("🏦 tokensPerEth:", tokensPerEth ? tokensPerEth.toString() : "...");
 
   // const complete = useContractReader(readContracts,"ExampleExternalContract", "completed")
@@ -575,7 +575,7 @@ function App(props) {
             {transferDisplay}
             <Divider />
             <div style={{ padding: 8, marginTop: 32, width: 300, margin: "auto" }}>
-              <Card title="Buy Tokens" extra={<a href="#">code</a>}>
+              <Card title="Buy Tokens">
                 <div style={{ padding: 8 }}>{tokensPerEth && tokensPerEth.toNumber()} tokens per ETH</div>
 
                 <div style={{ padding: 8 }}>

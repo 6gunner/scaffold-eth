@@ -15,6 +15,7 @@ export default function Transactor(providerOrSigner, gasPrice, etherscan) {
   if (typeof providerOrSigner !== "undefined") {
     // eslint-disable-next-line consistent-return
     return async (tx, callback) => {
+      debugger;
       let signer;
       let network;
       let provider;
