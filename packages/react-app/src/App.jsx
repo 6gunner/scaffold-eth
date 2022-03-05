@@ -110,7 +110,7 @@ const walletLinkProvider = walletLink.makeWeb3Provider(`https://mainnet.infura.i
 */
 const web3Modal = new Web3Modal({
   network: "mainnet", // Optional. If using WalletConnect on xDai, change network to "xdai" and add RPC info below for xDai chain.
-  cacheProvider: true, // optional
+  cacheProvider: false, // optional
   theme: "light", // optional. Change to "dark" for a dark theme.
   providerOptions: {
     walletconnect: {
@@ -417,24 +417,28 @@ function App(props) {
   }
 
   const loadWeb3Modal = useCallback(async () => {
-    const provider = await web3Modal.connect();
-    setInjectedProvider(new ethers.providers.Web3Provider(provider));
-
-    provider.on("chainChanged", chainId => {
-      console.log(`chain changed to ${chainId}! updating providers`);
+    try {
+      const provider = await web3Modal.connect();
       setInjectedProvider(new ethers.providers.Web3Provider(provider));
-    });
 
-    provider.on("accountsChanged", () => {
-      console.log(`account changed!`);
-      setInjectedProvider(new ethers.providers.Web3Provider(provider));
-    });
+      provider.on("chainChanged", chainId => {
+        console.log(`chain changed to ${chainId}! updating providers`);
+        setInjectedProvider(new ethers.providers.Web3Provider(provider));
+      });
 
-    // Subscribe to session disconnection
-    provider.on("disconnect", (code, reason) => {
-      console.log(code, reason);
-      logoutOfWeb3Modal();
-    });
+      provider.on("accountsChanged", () => {
+        console.log(`account changed!`);
+        setInjectedProvider(new ethers.providers.Web3Provider(provider));
+      });
+
+      // Subscribe to session disconnection
+      provider.on("disconnect", (code, reason) => {
+        console.log(code, reason);
+        logoutOfWeb3Modal();
+      });
+    } catch (e) {
+      console.error(e);
+    }
   }, [setInjectedProvider]);
 
   useEffect(() => {
@@ -479,18 +483,23 @@ function App(props) {
   }
 
   const buyTokensEvents = useEventListener(readContracts, "Vendor", "BuyTokens", localProvider, 1);
-  console.log("📟 buyTokensEvents:", buyTokensEvents);
+  const sellTokensEvents = useEventListener(readContracts, "Vendor", "SellTokens", localProvider, 1);
 
   const [tokenBuyAmount, setTokenBuyAmount] = useState();
+  const [tokenSellAmount, setTokenSellAmount] = useState();
+  const [tokenApproveAmount, setTokenApproveAmount] = useState();
 
   const ethCostToPurchaseTokens =
     tokenBuyAmount && tokensPerEth && ethers.utils.parseEther("" + tokenBuyAmount / parseFloat(tokensPerEth));
-  console.log("ethCostToPurchaseTokens:", ethCostToPurchaseTokens);
+
+  const ethGetToSellTokens =
+    tokenSellAmount && tokensPerEth && ethers.utils.parseEther("" + tokenSellAmount / parseFloat(tokensPerEth));
 
   const [tokenSendToAddress, setTokenSendToAddress] = useState();
   const [tokenSendAmount, setTokenSendAmount] = useState();
 
   const [buying, setBuying] = useState();
+  const [selling, setSelling] = useState();
 
   let transferDisplay = "";
   if (yourTokenBalance) {
@@ -605,7 +614,68 @@ function App(props) {
                 </div>
               </Card>
             </div>
+            <div style={{ padding: 8, marginTop: 32, width: 300, margin: "auto" }}>
+              <Card title="Approve">
+                <div style={{ padding: 8 }}>
+                  <Input
+                    style={{ textAlign: "center" }}
+                    placeholder={"amount of tokens to approve"}
+                    value={tokenApproveAmount}
+                    onChange={e => {
+                      setTokenApproveAmount(e.target.value);
+                    }}
+                  />
+                </div>
 
+                <div style={{ padding: 8 }}>
+                  <Button
+                    type={"primary"}
+                    onClick={async () => {
+                      const result = await tx(
+                        writeContracts.YourToken.approve(
+                          writeContracts.Vendor.address,
+                          ethers.utils.parseEther("" + tokenApproveAmount),
+                        ),
+                      );
+                      console.log(result);
+                    }}
+                  >
+                    Approve
+                  </Button>
+                </div>
+              </Card>
+            </div>
+            <div style={{ padding: 8, marginTop: 32, width: 300, margin: "auto" }}>
+              <Card title="Sell Tokens">
+                <div style={{ padding: 8 }}>{tokensPerEth && tokensPerEth.toNumber()} tokens per ETH</div>
+
+                <div style={{ padding: 8 }}>
+                  <Input
+                    style={{ textAlign: "center" }}
+                    placeholder={"amount of tokens to sell"}
+                    value={tokenSellAmount}
+                    onChange={e => {
+                      setTokenSellAmount(e.target.value);
+                    }}
+                  />
+                  <Balance balance={ethGetToSellTokens} dollarMultiplier={price} />
+                </div>
+
+                <div style={{ padding: 8 }}>
+                  <Button
+                    type={"primary"}
+                    loading={selling}
+                    onClick={async () => {
+                      setSelling(true);
+                      await tx(writeContracts.Vendor.sellTokens(ethers.utils.parseEther("" + tokenSellAmount)));
+                      setSelling(false);
+                    }}
+                  >
+                    Sell Tokens
+                  </Button>
+                </div>
+              </Card>
+            </div>
             <div style={{ padding: 8, marginTop: 32 }}>
               <div>Vendor Token Balance:</div>
               <Balance balance={vendorTokenBalance} fontSize={64} />
@@ -628,6 +698,24 @@ function App(props) {
                       ETH to get
                       <Balance balance={item.args[2]} />
                       Tokens
+                    </List.Item>
+                  );
+                }}
+              />
+            </div>
+
+            <div style={{ width: 500, margin: "auto", marginTop: 64 }}>
+              <div>Sell Token Events:</div>
+              <List
+                dataSource={sellTokensEvents}
+                renderItem={item => {
+                  return (
+                    <List.Item key={item.blockNumber + item.blockHash}>
+                      <Address value={item.args[0]} ensProvider={mainnetProvider} fontSize={16} /> sell
+                      <Balance balance={item.args[1]} />
+                      Tokens to get
+                      <Balance balance={item.args[2]} />
+                      ETH
                     </List.Item>
                   );
                 }}

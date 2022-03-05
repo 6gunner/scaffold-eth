@@ -17,7 +17,7 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   });
 
   // Todo: transfer tokens to frontend address
-  // const yourToken = await ethers.getContract("YourToken", deployer);
+  const yourToken = await ethers.getContract("YourToken", deployer);
   // const result = await yourToken.transfer(
   //   "0x3C06b3691956496B6622aE8B75c6319164f22E78",
   //   ethers.utils.parseEther("1000")
@@ -61,12 +61,12 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
 
   // Verify your contracts with Etherscan
   // You don't want to verify on localhost
-  if (chainId !== localChainId) {
-    await run("verify:verify", {
-      address: yourToken.address,
-      contract: "contracts/YourToken.sol:YourToken",
-      contractArguments: [],
-    });
-  }
+  // if (chainId !== localChainId) {
+  //   await run("verify:verify", {
+  //     address: yourToken.address,
+  //     contract: "contracts/YourToken.sol:YourToken",
+  //     contractArguments: [],
+  //   });
+  // }
 };
 module.exports.tags = ["YourToken"];

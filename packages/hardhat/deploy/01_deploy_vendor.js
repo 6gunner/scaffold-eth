@@ -16,9 +16,9 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const balanceOfYourToken = await yourToken.balanceOf(deployer);
   console.log(`\n 🏵  Sending ${balanceOfYourToken} tokens to the vendor...\n`);
   const result = await yourToken.transfer(vendor.address, balanceOfYourToken);
-  console.log("\n 🤹  Sending ownership to frontend address...\n");
+  console.log("\n 🤹  Sending ownership to address...\n");
   // ToDo: change address with your burner wallet address vvvv
-  await vendor.transferOwnership("0x3C06b3691956496B6622aE8B75c6319164f22E78");
+  // await vendor.transferOwnership("0x35D4A3Bd19382e5180824823E90312Be405c3707");
 };
 
 module.exports.tags = ["Vendor"];
